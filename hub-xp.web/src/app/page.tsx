@@ -57,6 +57,7 @@ export default function Home() {
         ? {
             page,
             limit: 10,
+            reviewCount: 3
           }
         : undefined
     );

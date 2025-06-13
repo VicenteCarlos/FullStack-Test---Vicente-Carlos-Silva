@@ -21,6 +21,30 @@ interface BooksResponse {
   };
 }
 
+interface ReviewsResponse {
+  data: {
+    id: string;
+    bookId: {
+      _id: string;
+      name: string;
+      author: string;
+      avaliation: number;
+      description: string;
+      reviewCount: number;
+      createdAt: string;
+      updatedAt: string;
+    } | null;
+    reviewCount: number;
+    avaliation: string;
+    createdAt: string;
+  }[];
+  meta: {
+    total: number;
+    page: number;
+    totalPages: number;
+  };
+}
+
 interface TopBooksResponse {
   data: (Book & {
     avgRating: number;
@@ -113,20 +137,37 @@ export function useDeleteBook() {
       } else {
         toast.error("Erro ao excluir livro");
       }
-
     },
   });
 }
 
-export function useBestRatedBooks(params?: { page?: number; limit?: number }) {
-  const query = useQuery<BooksResponse>({
+export function useBestRatedBooks(params?: { page?: number; limit?: number; reviewCount?: number }) {
+  const query = useQuery<ReviewsResponse, Error, BooksResponse>({
     queryKey: ["best-rated-books", params],
     queryFn: async () => {
-      const response = await api.get<BooksResponse>("/books/reviews", {
-        params,
+      const response = await api.get<ReviewsResponse>("/reviews", {
+        params: {
+          ...params,
+          reviewCount: params?.reviewCount
+        }
       });
       return response.data;
     },
+    select: (data) => ({
+      data: data.data
+        .filter((review): review is typeof review & { bookId: NonNullable<typeof review.bookId> } => review.bookId !== null)
+        .map(review => ({
+          id: review.bookId._id,
+          name: review.bookId.name,
+          author: review.bookId.author,
+          avaliation: review.bookId.avaliation,
+          description: review.bookId.description,
+          reviewCount: review.reviewCount,
+          created_at: review.bookId.createdAt,
+          updated_at: review.bookId.updatedAt
+        })),
+      meta: data.meta
+    })
   });
 
   return query;

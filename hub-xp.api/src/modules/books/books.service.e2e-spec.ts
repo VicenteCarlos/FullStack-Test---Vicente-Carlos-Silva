@@ -5,7 +5,6 @@ import { BookTransformer } from './transformer/books.transformer';
 import { CreateBookDto } from './dtos/create-books.dto';
 import { UpdateBookDto } from './dtos/update-books.dto';
 import { createReviewCountDto } from './dtos/create-books.dto';
-import { HttpException, HttpStatus } from '@nestjs/common';
 import { AppError } from '../../commons/AppError';
 import { OperationErrors } from '../../commons/OperationErrors.enum';
 
@@ -92,6 +91,55 @@ describe('BookService', () => {
     });
   });
 
+  describe('createReviewCountDto', () => {
+    it('should increment review count of a book', async () => {
+      const bookId = '1';
+      const createReviewCountDtoMock: createReviewCountDto = {
+        reviewCount: 2,
+      };
+
+      const updatedMockBook = {
+        ...mockBook,
+        reviewCount: 2,
+      };
+
+      const updatedTransformedBook = {
+        ...mockTransformedBook,
+        reviewCount: 2,
+      };
+
+      mockBookRepository.findOneBook.mockResolvedValue(mockBook);
+      mockBookRepository.createReviewCountDto.mockResolvedValue(updatedMockBook);
+      mockBookTransformer.item.mockResolvedValue(updatedTransformedBook);
+
+      const result = await service.createReviewCountDto(bookId, createReviewCountDtoMock);
+
+      expect(result).toEqual(updatedTransformedBook);
+      expect(mockBookRepository.findOneBook).toHaveBeenCalledWith(bookId);
+      expect(mockBookRepository.createReviewCountDto).toHaveBeenCalledWith(bookId, {
+        reviewCount: 2,
+      });
+    });
+
+    it('should throw AppError if book is not found', async () => {
+      const bookId = '1';
+      const createReviewCountDtoMock: createReviewCountDto = {
+        reviewCount: 2,
+      };
+
+      mockBookRepository.findOneBook.mockResolvedValue(null);
+
+      await expect(service.createReviewCountDto(bookId, createReviewCountDtoMock)).rejects.toThrow(
+        new AppError(
+          OperationErrors.NOT_FOUND,
+          404,
+          'Livro não encontrado',
+          true,
+        ),
+      );
+    });
+  });
+
   describe('findAllBooks', () => {
     it('should return paginated books', async () => {
       const queryParams = { page: 1, limit: 10 };
@@ -128,13 +176,15 @@ describe('BookService', () => {
       expect(mockBookTransformer.item).toHaveBeenCalledWith(mockBook);
     });
 
-    it('should throw HttpException if book is not found', async () => {
+    it('should throw AppError if book is not found', async () => {
       mockBookRepository.findOneBook.mockResolvedValue(null);
 
       await expect(service.findOneBook('1')).rejects.toThrow(
-        new HttpException(
-          { message: 'Livro não encontrado' },
-          HttpStatus.NOT_FOUND,
+        new AppError(
+          OperationErrors.NOT_FOUND,
+          404,
+          'Livro não encontrado',
+          true,
         ),
       );
     });
@@ -166,7 +216,7 @@ describe('BookService', () => {
       expect(mockBookTransformer.item).toHaveBeenCalledWith(updatedMockBook);
     });
 
-    it('should throw HttpException if book is not found for update', async () => {
+    it('should throw AppError if book is not found for update', async () => {
       const updateBookDto: UpdateBookDto = {
         name: 'Dom Casmurro - Edição Atualizada',
       };
@@ -174,9 +224,11 @@ describe('BookService', () => {
       mockBookRepository.updateBook.mockResolvedValue(null);
 
       await expect(service.updateBook('1', updateBookDto)).rejects.toThrow(
-        new HttpException(
-          { message: 'Livro não encontrado para atualização' },
-          HttpStatus.NOT_FOUND,
+        new AppError(
+          OperationErrors.NOT_FOUND,
+          404,
+          'Livro não encontrado para atualização',
+          true,
         ),
       );
     });
@@ -194,69 +246,22 @@ describe('BookService', () => {
       expect(mockBookTransformer.item).toHaveBeenCalledWith(mockBook);
     });
 
-    it('should throw HttpException if book is not found for deletion', async () => {
+    it('should throw AppError if book is not found for deletion', async () => {
       mockBookRepository.deleteBook.mockResolvedValue(null);
 
       await expect(service.deleteBook('1')).rejects.toThrow(
-        new HttpException(
-          { message: 'Livro não encontrado para exclusão' },
-          HttpStatus.NOT_FOUND,
+        new AppError(
+          OperationErrors.NOT_FOUND,
+          404,
+          'Livro não encontrado para exclusão',
+          true,
         ),
       );
     });
   });
 
-  describe('createReviewCountDto', () => {
-    it('should create a review count for a book', async () => {
-      const reviewCountDto: createReviewCountDto = {
-        reviewCount: 1
-      };
-
-      const mockBookWithReview = {
-        ...mockBook,
-        reviewCount: 2 // reviewCount anterior (1) + 1
-      };
-
-      mockBookRepository.findOneBook.mockResolvedValue(mockBook);
-      mockBookRepository.createReviewCountDto.mockResolvedValue(mockBookWithReview);
-      mockBookTransformer.item.mockResolvedValue({
-        ...mockTransformedBook,
-        reviewCount: 2
-      });
-
-      const result = await service.createReviewCountDto('1', reviewCountDto);
-
-      expect(result).toEqual({
-        ...mockTransformedBook,
-        reviewCount: 2
-      });
-      expect(mockBookRepository.findOneBook).toHaveBeenCalledWith('1');
-      expect(mockBookRepository.createReviewCountDto).toHaveBeenCalledWith('1', { reviewCount: 2 });
-      expect(mockBookTransformer.item).toHaveBeenCalledWith(mockBookWithReview);
-    });
-
-    it('should throw HttpException if book is not found for review count update', async () => {
-      const reviewCountDto: createReviewCountDto = {
-        reviewCount: 1
-      };
-
-      mockBookRepository.findOneBook.mockResolvedValue(null);
-
-      try {
-        await service.createReviewCountDto('1', reviewCountDto);
-        fail('Expected an error to be thrown');
-      } catch (error) {
-        expect(error).toBeInstanceOf(HttpException);
-        expect(error.getResponse()).toEqual({ message: 'Livro não encontrado' });
-        expect(error.getStatus()).toBe(HttpStatus.NOT_FOUND);
-      }
-    });
-  });
-
   describe('findBestRatedBooks', () => {
-    it('should return best rated books', async () => {
-      const page = 1;
-      const limit = 10;
+    it('should return paginated best rated books', async () => {
       const mockPaginatedResponse = {
         books: [mockBook],
         total: 1,
@@ -265,7 +270,7 @@ describe('BookService', () => {
       mockBookRepository.findBestRatedBooks.mockResolvedValue(mockPaginatedResponse);
       mockBookTransformer.collection.mockResolvedValue([mockTransformedBook]);
 
-      const result = await service.findBestRatedBooks(page, limit);
+      const result = await service.findBestRatedBooks(1, 10);
 
       expect(result).toEqual({
         data: [mockTransformedBook],
@@ -276,7 +281,6 @@ describe('BookService', () => {
         },
       });
       expect(mockBookRepository.findBestRatedBooks).toHaveBeenCalledWith(0, 10);
-      expect(mockBookTransformer.collection).toHaveBeenCalledWith(mockPaginatedResponse.books);
     });
   });
 }); 

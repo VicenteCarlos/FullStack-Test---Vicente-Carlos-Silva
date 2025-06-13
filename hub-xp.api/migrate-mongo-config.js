@@ -6,7 +6,7 @@ const config = {
     url: "mongodb://NEXA:NEXA@localhost:27017",
 
     // TODO Change this to your database name:
-    databaseName: "admin",
+    databaseName: "admin2",
 
     options: {
       useNewUrlParser: true, // removes a deprecation warning when connecting

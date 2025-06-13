@@ -24,10 +24,7 @@ export class BookRepository {
     return await book.save();
   }
 
-  async createReviewCountDto(
-    id: string,
-    data: { reviewCount: number }
-  ) {
+  async createReviewCountDto(id: string, data: { reviewCount: number }) {
     return await this.bookModel
       .findByIdAndUpdate(
         id,
@@ -49,7 +46,7 @@ export class BookRepository {
   }
 
   async findAllBooks(
-    { page, limit: limitParam, avaliation, ...queryParams }: QueryParamsDTO,
+    { page, limit: limitParam, ...queryParams }: QueryParamsDTO,
     skip: number,
     limit: number,
   ) {
@@ -71,17 +68,10 @@ export class BookRepository {
     const removeUndefined = this.todasPropsSaoUndefined(queryParams);
     const [books, total] = await Promise.all([
       this.bookModel
-        .find(
-          removeUndefined
-            ? {
-                avaliation: { $gte: avaliation },
-              }
-            : {
-                ...queryParams,
-                name: { $regex: queryParams.name, $options: 'i' },
-                avaliation: { $gte: avaliation },
-              },
-        )
+        .find({
+          ...queryParams,
+          name: { $regex: queryParams.name, $options: 'i' },
+        })
         .skip(skip)
         .limit(limit)
         .exec(),
@@ -123,15 +113,5 @@ export class BookRepository {
     ]);
 
     return { books, total };
-  }
-
-  async getTopBooks(limit: number) {
-    const books = await this.bookModel
-      .find()
-      .sort({ avaliation: -1, reviewCount: -1 })
-      .limit(limit)
-      .exec();
-
-    return books;
   }
 }

@@ -10,7 +10,6 @@ import {
   Query,
   Req,
   Res,
-  UseGuards,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { BookService } from './books.service';
@@ -30,40 +29,6 @@ export class BookController {
   ) {
     const data = await this.bookService.createBook(createBookDto);
     res.status(HttpStatus.CREATED).json({ data });
-  }
-
-  @Post('/reviewCount/:id')
-  async createReviewCount(
-    @Req() req: Request,
-    @Res() res: Response,
-    @Body() createReviewCountDto: createReviewCountDto,
-    @Param('id') id: string,
-  ) {
-    const data = await this.bookService.createReviewCountDto(
-      id,
-      createReviewCountDto,
-    );
-    res.status(HttpStatus.CREATED).json({ data });
-  }
-
-  @Get('top')
-  async getTopBooks(
-    @Req() req: Request,
-    @Res() res: Response,
-    @Query('limit') limit = 10,
-  ) {
-    const data = await this.bookService.getTopBooks(+limit);
-    res.status(HttpStatus.OK).json(data);
-  }
-
-  @Get('reviews')
-  async findBestRatedBooks(
-    @Req() req: Request,
-    @Res() res: Response,
-    @Query() { page = 1, limit = 10 }: QueryParamsDTO,
-  ) {
-    const data = await this.bookService.findBestRatedBooks(page, limit);
-    res.status(HttpStatus.OK).json(data);
   }
 
   @Get()

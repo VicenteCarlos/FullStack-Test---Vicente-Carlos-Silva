@@ -126,15 +126,5 @@ export class BookService {
     };
   }
 
-  async getTopBooks(limit: number) {
-    const topBooks = await this.bookRepository.getTopBooks(limit);
-    const transformedBooks = await this.transformer.collection(topBooks);
-
-    return {
-      data: transformedBooks.map((book) => ({
-        ...book,
-        avgRating: book.avaliation,
-      })),
-    };
-  }
+ 
 }

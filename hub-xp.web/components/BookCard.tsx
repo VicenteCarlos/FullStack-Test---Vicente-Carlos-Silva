@@ -61,7 +61,7 @@ export function BookCard({ book, onUpdate, onDelete }: BookCardProps) {
         <div className="flex items-center gap-1 mb-4">
           {stars}
           <span className="text-sm text-gray-400 ml-2">
-            {book.rating.toFixed(1)}
+            {book.rating}
           </span>
         </div>
 

@@ -1,23 +1,25 @@
 "use client";
 
+import { Suspense } from "react";
+import { Loading } from "../../../components/Loading";
 import { notFound } from "next/navigation";
 import { BookDetails } from "./components/BookDetails";
-import { useBook } from "@/networking/hooks/books/useBook";
+import { useBook } from "@/network/hooks/books/useBooks";
 
 export default function BookPage({ params }: { params: { id: string } }) {
-  const { data: book, isLoading, error } = useBook(params.id);
+  const { data, isLoading, error } = useBook(params.id);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-[#111111] text-white p-8 flex items-center justify-center">
-        <div className="text-xl">Carregando...</div>
-      </div>
-    );
+    return <Loading />;
   }
 
-  if (error || !book) {
+  if (error || !data?.data) {
     notFound();
   }
 
-  return <BookDetails book={book} />;
+  return (
+    <Suspense fallback={<Loading />}>
+      <BookDetails book={data.data} />
+    </Suspense>
+  );
 }

@@ -1,7 +1,6 @@
 import { Book } from '@/shared/types/Book'
 import { Edit3, Star, Trash2 } from 'lucide-react'
 import Image from 'next/image'
-import { useReviewCount } from '@/networking/hooks/books/useReviewCount'
 import { Button } from '../../components/ui/button'
 import {
   Dialog,
@@ -13,6 +12,7 @@ import {
 } from '../../components/ui/dialog'
 import { useState } from 'react'
 import { ReviewModal } from '../../components/ReviewModal'
+import { useCreateReview } from '@/network/hooks/reviews/useReviews'
 
 interface BookCardProps {
   book: Book
@@ -22,13 +22,14 @@ interface BookCardProps {
 
 export function BookCard({ book, onUpdate, onDelete }: BookCardProps) {
   const [isReviewOpen, setIsReviewOpen] = useState(false)
-  const { submitReview, isSubmitting } = useReviewCount()
+  const { mutateAsync: createReview, isPending: isSubmitting } = useCreateReview()
 
-  const handleReview = (rating: number) => {
-    submitReview(
+  const handleReview = (reviewCount: number, avaliation: string) => {
+    createReview(
       { 
         bookId: book.id, 
-        review: { reviewCount: rating } 
+        reviewCount,
+        avaliation
       },
       {
         onSuccess: () => setIsReviewOpen(false)
@@ -82,7 +83,7 @@ export function BookCard({ book, onUpdate, onDelete }: BookCardProps) {
         <div className="mt-3 flex items-center justify-between">
           <div className="flex items-center gap-1">
             <span className="text-yellow-500">★</span>
-            <span className="text-sm text-zinc-400">{book.avaliation.toFixed(1)}</span>
+            <span className="text-sm text-zinc-400">{book.avaliation}</span>
           </div>
           <button
             onClick={() => setIsReviewOpen(true)}
