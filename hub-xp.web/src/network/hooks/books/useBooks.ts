@@ -86,6 +86,14 @@ export function useUpdateBook() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["books"] });
       queryClient.invalidateQueries({ queryKey: ["book", variables.id] });
+      toast.success("Livro atualizado com sucesso!");
+    },
+    onError: (error) => {
+      if (error instanceof AxiosError) {
+        toast.error(error.response?.data.message || "Erro ao atualizar livro");
+      } else {
+        toast.error("Erro ao atualizar livro");
+      }
     },
   });
 }
