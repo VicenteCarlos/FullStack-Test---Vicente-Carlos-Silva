@@ -63,6 +63,10 @@ export function useCreateBook() {
     ): Promise<BookResponse> => await createBook(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["books"] });
+      toast.success("Livro criado com sucesso!");
+    },
+    onError: () => {
+      toast.error("Erro ao criar o livro");
     },
   });
 
@@ -93,14 +97,6 @@ export function useDeleteBook() {
     mutationFn: async (id: string) => await deleteBook(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["books"] });
-      toast.success("Livro excluído com sucesso!");
-    },
-    onError: (error) => {
-      if (error instanceof AxiosError) {
-        toast.error(error.response?.data.message || "Erro ao excluir livro");
-      } else {
-        toast.error("Erro ao excluir livro");
-      }
     },
   });
 }
